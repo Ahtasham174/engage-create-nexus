@@ -66,9 +66,9 @@ export default {
 				// Custom portfolio colors
 				portfolio: {
 					darkest: '#141619',
-					dark: '#2C2E3A',
+					dark: '#2C2E3A', 
 					navy: '#050A44',
-					blue: '#0A21C0',
+					blue: '#8B5CF6', // Changed from #0A21C0 to #8B5CF6 (vibrant purple)
 					gray: '#B3B4BD',
 				}
 			},

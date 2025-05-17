@@ -14,7 +14,7 @@ const Navigation = () => {
       const scrollY = window.pageYOffset;
       
       sections.forEach(section => {
-        const sectionHeight = section.offsetHeight;
+        const sectionHeight = (section as HTMLElement).offsetHeight;
         const sectionTop = (section as HTMLElement).offsetTop - 100;
         const sectionId = section.getAttribute('id') || '';
         
