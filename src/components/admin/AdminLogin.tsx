@@ -1,6 +1,8 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { AlertCircle } from 'lucide-react';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
@@ -20,7 +22,13 @@ const AdminLogin = () => {
         password
       });
       
-      if (signInError) throw signInError;
+      if (signInError) {
+        if (signInError.message.includes('Invalid login')) {
+          throw new Error('Invalid email or password. Please try again.');
+        } else {
+          throw signInError;
+        }
+      }
       
       if (data?.user) {
         localStorage.setItem('adminLoggedIn', 'true');
@@ -48,7 +56,10 @@ const AdminLogin = () => {
         <form onSubmit={handleSubmit} className="bg-portfolio-dark rounded-xl shadow-lg p-8 border border-portfolio-dark/40">
           {error && (
             <div className="bg-red-900/20 border border-red-800 rounded-lg p-4 mb-6 text-red-400">
-              <p>{error}</p>
+              <div className="flex items-center">
+                <AlertCircle size={18} className="mr-2 flex-shrink-0" />
+                <p>{error}</p>
+              </div>
             </div>
           )}
           

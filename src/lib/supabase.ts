@@ -1,19 +1,11 @@
-
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize the Supabase client with error handling for missing environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing Supabase environment variables. Make sure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.');
-}
+// Initialize the Supabase client with the provided values
+const supabaseUrl = 'https://ivwjieykglkaqkfquqnu.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml2d2ppZXlrZ2xrYXFrZnF1cW51Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0OTM1MDMsImV4cCI6MjA2MzA2OTUwM30.9cQ9lzI2WbH4MDf43q6UK71U6zdwwDYYtl0zA4I1oP8';
 
 // Initialize the Supabase client
-export const supabase = createClient(
-  supabaseUrl || '',
-  supabaseKey || ''
-);
+export const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Types for our database schema
 export interface Profile {
