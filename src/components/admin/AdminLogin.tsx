@@ -1,6 +1,12 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
@@ -14,20 +20,22 @@ const AdminLogin = () => {
     setError('');
     setIsLoading(true);
     
-    // For demo purposes only - hardcoded credentials
-    // In a real application, this would be replaced with actual authentication
-    if (email === 'admin@example.com' && password === 'password123') {
-      // Simulate API call delay
-      setTimeout(() => {
+    try {
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (signInError) throw signInError;
+      
+      if (data?.user) {
         localStorage.setItem('adminLoggedIn', 'true');
-        setIsLoading(false);
         navigate('/admin/dashboard');
-      }, 1500);
-    } else {
-      setTimeout(() => {
-        setError('Invalid email or password');
-        setIsLoading(false);
-      }, 1500);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to login');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -101,9 +109,7 @@ const AdminLogin = () => {
           
           <div className="mt-8 text-center">
             <p className="text-portfolio-gray text-sm">
-              Demo credentials: <br />
-              Email: admin@example.com <br />
-              Password: password123
+              Create an admin account in Supabase Authentication
             </p>
           </div>
         </form>

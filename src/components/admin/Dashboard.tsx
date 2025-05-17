@@ -1,32 +1,81 @@
 
+import { useEffect, useState } from 'react';
 import { Activity, ArrowDown, ArrowUp, BarChart3, Eye, MessageSquare, ThumbsUp, Users } from 'lucide-react';
+import { supabase, dbService, Message } from '@/lib/supabase';
 
 const Dashboard = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [statsData, setStatsData] = useState({
+    totalVisits: 0,
+    uniqueVisitors: 0,
+    avgSessionTime: '0m 0s',
+    unreadMessages: 0
+  });
+  
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        // Fetch messages
+        const messagesData = await dbService.getMessages();
+        setMessages(messagesData.slice(0, 4)); // Show only 4 most recent messages
+        
+        // Count unread messages
+        const unreadCount = messagesData.filter(msg => !msg.read).length;
+        
+        // Get basic analytics
+        // In a real app, this would be more sophisticated
+        const { count: visitCount } = await supabase
+          .from('site_visits')
+          .select('*', { count: 'exact', head: true });
+          
+        const { count: uniqueCount } = await supabase
+          .from('site_visits')
+          .select('*', { count: 'exact', head: true })
+          .is('user_agent', null);
+        
+        setStatsData({
+          totalVisits: visitCount || 0,
+          uniqueVisitors: uniqueCount || 0,
+          avgSessionTime: '3m 45s', // This would be calculated in a real app
+          unreadMessages: unreadCount
+        });
+        
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchDashboardData();
+  }, []);
+  
   const stats = [
     {
       title: "Total Views",
-      value: "12,845",
+      value: statsData.totalVisits.toString(),
       change: "+14%",
       trend: "up",
       icon: <Eye size={24} />
     },
     {
       title: "Unique Visitors",
-      value: "8,623",
+      value: statsData.uniqueVisitors.toString(),
       change: "+5.3%",
       trend: "up",
       icon: <Users size={24} />
     },
     {
       title: "Avg. Session",
-      value: "3m 45s",
+      value: statsData.avgSessionTime,
       change: "-0.8%",
       trend: "down",
       icon: <Activity size={24} />
     },
     {
       title: "Messages",
-      value: "48",
+      value: statsData.unreadMessages.toString(),
       change: "+28%",
       trend: "up",
       icon: <MessageSquare size={24} />
@@ -102,7 +151,7 @@ const Dashboard = () => {
             <div className="text-portfolio-gray flex flex-col items-center">
               <BarChart3 size={48} className="mb-4 opacity-50" />
               <p>Analytics chart would appear here</p>
-              <p className="text-sm opacity-70">(Visualization requires implementation)</p>
+              <p className="text-sm opacity-70">(Connect to analytics service for visualization)</p>
             </div>
           </div>
         </div>
@@ -160,22 +209,40 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-portfolio-dark/40">
-              {[
-                { name: "Michael Chen", email: "michael@example.com", subject: "Project Inquiry", date: "May 15, 2025" },
-                { name: "Sarah Johnson", email: "sarah@example.com", subject: "Consultation Request", date: "May 14, 2025" },
-                { name: "David Wilson", email: "david@example.com", subject: "Collaboration Opportunity", date: "May 13, 2025" },
-                { name: "Anna Martinez", email: "anna@example.com", subject: "Data Science Question", date: "May 12, 2025" }
-              ].map((message, index) => (
-                <tr key={index} className="hover:bg-portfolio-darkest transition-colors">
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-white">{message.name}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-portfolio-gray">{message.email}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-portfolio-gray">{message.subject}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-portfolio-gray">{message.date}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button className="text-portfolio-blue hover:text-white transition-colors">View</button>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-4 text-center text-portfolio-gray">
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-portfolio-blue mr-3"></div>
+                      Loading messages...
+                    </div>
                   </td>
                 </tr>
-              ))}
+              ) : messages.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-4 text-center text-portfolio-gray">
+                    No messages found
+                  </td>
+                </tr>
+              ) : (
+                messages.map((message, index) => (
+                  <tr key={message.id} className="hover:bg-portfolio-darkest transition-colors">
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-white">{message.name}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-portfolio-gray">{message.email}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-portfolio-gray">{message.subject}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-portfolio-gray">
+                      {new Date(message.created_at).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button className="text-portfolio-blue hover:text-white transition-colors">View</button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
