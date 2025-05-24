@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
@@ -19,6 +19,7 @@ import MessagesManagement from "./pages/admin/MessagesManagement";
 import SkillsManagement from "./pages/admin/SkillsManagement";
 import SettingsManagement from "./pages/admin/SettingsManagement";
 import { initializeSupabase } from "./lib/initSupabase";
+import { useToast } from "./hooks/use-toast";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,20 +31,46 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
+  const { toast } = useToast();
+  const [isInitializing, setIsInitializing] = useState(true);
+
   useEffect(() => {
     const setupSupabase = async () => {
       try {
-        // Only attempt to initialize in development or when tables need to be created
-        if (import.meta.env.DEV) {
-          await initializeSupabase();
+        setIsInitializing(true);
+        // Always attempt to initialize in development or production
+        const result = await initializeSupabase();
+        
+        if (!result.success) {
+          console.error('Failed to initialize Supabase:', result.error);
+          toast({
+            title: "Database Setup Error",
+            description: result.error || "There was a problem setting up the database. Check console for details.",
+            variant: "destructive",
+          });
+        } else {
+          console.log('Supabase initialization complete:', result);
+          if (result.tablesCreated) {
+            toast({
+              title: "Database Setup Complete",
+              description: "Your portfolio database has been successfully configured.",
+            });
+          }
         }
       } catch (err) {
         console.error("Failed to initialize Supabase:", err);
+        toast({
+          title: "Database Setup Error",
+          description: err instanceof Error ? err.message : "Unknown error occurred",
+          variant: "destructive",
+        });
+      } finally {
+        setIsInitializing(false);
       }
     };
     
     setupSupabase();
-  }, []);
+  }, [toast]);
 
   return (
     <QueryClientProvider client={queryClient}>
